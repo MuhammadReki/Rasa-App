@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="assets/logo/logo.png" alt="Rasa Logo" width="140" />
+
 # 🌸 Rasa
 
 ### Ruang aman untuk rasa
@@ -62,6 +64,29 @@
 - Animasi smooth
 - Floating bottom nav
 - Typography editorial (Playfair Display + Inter)
+
+---
+
+## 🎨 Design System
+
+### Color Palette
+
+| Warna | Hex | Penggunaan |
+|-------|-----|------------|
+| 🟤 Terracotta | `#C97B5A` | Primary accent |
+| 🌸 Dusty Rose | `#E8B4A0` | Secondary accent |
+| 🌿 Sage Green | `#8FA88F` | Tertiary accent |
+| ☕ Warm Cream | `#FAF3E0` | Background (light) |
+| 🟫 Deep Espresso | `#3E2C23` | Text primary |
+| 🌙 Midnight | `#1A1A2E` | Background (dark) |
+| 💜 Lavender | `#A084CA` | Accent (dark) |
+
+### Typography
+
+- **Headings**: Playfair Display (serif, editorial)
+- **Body**: Inter (clean sans-serif)
+- **Labels**: DM Mono (monospace)
+- **Quotes**: Lora (italic serif)
 
 ---
 
