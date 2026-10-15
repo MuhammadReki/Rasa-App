@@ -5,8 +5,10 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/theme_provider.dart';
 import '../home/models/article.dart';
+import '../home/models/user_profile.dart';
 import '../home/providers/article_provider.dart';
 import '../home/widgets/bottom_nav.dart';
+import 'providers/search_user_provider.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
@@ -47,7 +49,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         : const Color(0xFFFFFAF4);
 
     final searchResults = ref.watch(searchResultsProvider);
+    final searchUsers = ref.watch(searchUsersProvider);
     final trendingAsync = ref.watch(trendingTagsProvider);
+    final currentTab = ref.watch(searchTabProvider);
 
     return Scaffold(
       backgroundColor: bg,
@@ -117,7 +121,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                                     decoration: InputDecoration(
                                       isDense: true,
                                       border: InputBorder.none,
-                                      hintText: 'Cari cerita...',
+                                      hintText: 'Cari cerita atau orang...',
                                       hintStyle: GoogleFonts.inter(
                                         fontSize: 11,
                                         color: textSecondary,
@@ -144,10 +148,36 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 25),
+                    const SizedBox(height: 18),
 
-                    // Trending tags
-                    if (_searchController.text.isEmpty) ...[
+                    // Tab Switcher — Artikel / User
+                    Row(
+                      children: [
+                        _buildTabButton(
+                          'Artikel',
+                          0,
+                          currentTab,
+                          textPrimary,
+                          textSecondary,
+                          accent,
+                          isDark,
+                        ),
+                        const SizedBox(width: 8),
+                        _buildTabButton(
+                          'User',
+                          1,
+                          currentTab,
+                          textPrimary,
+                          textSecondary,
+                          accent,
+                          isDark,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Trending tags (cuma kalau tab Artikel & query kosong)
+                    if (currentTab == 0 && _searchController.text.isEmpty) ...[
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -211,8 +241,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       const SizedBox(height: 28),
                     ],
 
-                    // Hasil pencarian
-                    if (_searchController.text.isNotEmpty) ...[
+                    // ===================
+                    // HASIL PENCARIAN ARTIKEL
+                    // ===================
+                    if (currentTab == 0 &&
+                        _searchController.text.isNotEmpty) ...[
                       Text(
                         'Hasil untuk "${_searchController.text}"',
                         style: GoogleFonts.playfairDisplay(
@@ -241,37 +274,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         ),
                         data: (results) {
                           if (results.isEmpty) {
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 40),
-                              child: Center(
-                                child: Column(
-                                  children: [
-                                    Icon(
-                                      Icons.search_off,
-                                      size: 48,
-                                      color:
-                                          textSecondary.withValues(alpha: 0.5),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Text(
-                                      'Belum ada hasil',
-                                      style: GoogleFonts.playfairDisplay(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: textPrimary,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      'Coba kata kunci lain.',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 11,
-                                        color: textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                            return _buildEmptyState(
+                              Icons.search_off,
+                              'Belum ada hasil',
+                              'Coba kata kunci lain.',
+                              textPrimary,
+                              textSecondary,
                             );
                           }
 
@@ -288,6 +296,84 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                           );
                         },
                       ),
+                    ],
+
+                    // ===================
+                    // HASIL PENCARIAN USER
+                    // ===================
+                    if (currentTab == 1) ...[
+                      if (_searchController.text.isEmpty) ...[
+                        Text(
+                          'Cari teman baru',
+                          style: GoogleFonts.playfairDisplay(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: -0.5,
+                            color: textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 11),
+                        Text(
+                          'Ketik nama atau username buat nemuin orang.',
+                          style: GoogleFonts.inter(
+                            fontSize: 10,
+                            color: textSecondary,
+                          ),
+                        ),
+                      ] else ...[
+                        Text(
+                          'User untuk "${_searchController.text}"',
+                          style: GoogleFonts.playfairDisplay(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: -0.5,
+                            color: textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 11),
+                        searchUsers.when(
+                          loading: () => const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(40),
+                              child: CircularProgressIndicator(),
+                            ),
+                          ),
+                          error: (e, _) => Center(
+                            child: Text(
+                              'Error: $e',
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                color: textSecondary,
+                              ),
+                            ),
+                          ),
+                          data: (users) {
+                            if (users.isEmpty) {
+                              return _buildEmptyState(
+                                Icons.person_off_outlined,
+                                'Belum ada user',
+                                'Coba nama lain.',
+                                textPrimary,
+                                textSecondary,
+                              );
+                            }
+
+                            return Column(
+                              children: [
+                                for (final user in users)
+                                  _buildUserRow(
+                                    user,
+                                    textPrimary,
+                                    textSecondary,
+                                    accent,
+                                    surface,
+                                    AppColors.dividerColor(isDark),
+                                  ),
+                              ],
+                            );
+                          },
+                        ),
+                      ],
                     ],
                   ],
                 ),
@@ -318,6 +404,195 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
   }
 
+  // ===================
+  // TAB BUTTON
+  // ===================
+  Widget _buildTabButton(
+    String label,
+    int index,
+    int currentTab,
+    Color textPrimary,
+    Color textSecondary,
+    Color accent,
+    bool isDark,
+  ) {
+    final isActive = currentTab == index;
+
+    return GestureDetector(
+      onTap: () => ref.read(searchTabProvider.notifier).state = index,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          color: isActive
+              ? accent.withValues(alpha: 0.15)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isActive ? accent : AppColors.dividerColor(isDark),
+          ),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 10,
+            fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+            color: isActive ? accent : textSecondary,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ===================
+  // EMPTY STATE
+  // ===================
+  Widget _buildEmptyState(
+    IconData icon,
+    String title,
+    String subtitle,
+    Color textPrimary,
+    Color textSecondary,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 40),
+      child: Center(
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              size: 48,
+              color: textSecondary.withValues(alpha: 0.5),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              style: GoogleFonts.playfairDisplay(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              subtitle,
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                color: textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ===================
+  // USER ROW
+  // ===================
+  Widget _buildUserRow(
+    UserProfile user,
+    Color textPrimary,
+    Color textSecondary,
+    Color accent,
+    Color surface,
+    Color border,
+  ) {
+    final initial = user.fullName.isNotEmpty
+        ? user.fullName[0].toUpperCase()
+        : '?';
+
+    return GestureDetector(
+      onTap: () => context.go('/user/${user.id}'),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: border)),
+        ),
+        child: Row(
+          children: [
+            // Avatar
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: user.avatarUrl.isNotEmpty
+                  ? Image.network(
+                      user.avatarUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Center(
+                        child: Text(
+                          initial,
+                          style: GoogleFonts.playfairDisplay(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: accent,
+                          ),
+                        ),
+                      ),
+                    )
+                  : Center(
+                      child: Text(
+                        initial,
+                        style: GoogleFonts.playfairDisplay(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: accent,
+                        ),
+                      ),
+                    ),
+            ),
+            const SizedBox(width: 12),
+            // Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    user.fullName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    user.username.isNotEmpty
+                        ? '@${user.username}'
+                        : user.bio.isNotEmpty
+                            ? user.bio
+                            : 'Penulis Rasa',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      fontSize: 9,
+                      color: textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(
+              Icons.chevron_right,
+              size: 18,
+              color: textSecondary,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ===================
+  // TREND CARD (existing)
+  // ===================
   Widget _buildTrendCard(
     String rank,
     String tag,
@@ -372,6 +647,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
   }
 
+  // ===================
+  // COMPACT STORY (existing)
+  // ===================
   Widget _buildCompactStory(
     Article article,
     Color textPrimary,

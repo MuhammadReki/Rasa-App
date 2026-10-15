@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:share_plus/share_plus.dart';
 import '../../core/supabase/supabase_client.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/theme_provider.dart';
@@ -15,6 +13,7 @@ import 'widgets/article_meta.dart';
 import 'widgets/article_body.dart';
 import 'widgets/comment_preview.dart';
 import 'widgets/article_action_bar.dart';
+import 'share_card_screen.dart';
 
 class ArticleScreen extends ConsumerStatefulWidget {
   final String articleId;
@@ -26,11 +25,36 @@ class ArticleScreen extends ConsumerStatefulWidget {
 
 class _ArticleScreenState extends ConsumerState<ArticleScreen> {
   late final InteractionRepository _repo;
+  final ScrollController _scrollController = ScrollController();
+  double _readingProgress = 0.0;
 
   @override
   void initState() {
     super.initState();
     _repo = InteractionRepository(ref.read(supabaseProvider));
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.offset;
+
+    if (maxScroll <= 0) return;
+
+    final progress = (currentScroll / maxScroll).clamp(0.0, 1.0);
+
+    if ((progress - _readingProgress).abs() > 0.01) {
+      setState(() => _readingProgress = progress);
+    }
   }
 
   Future<void> _toggleLike(bool isLiked) async {
@@ -71,19 +95,17 @@ class _ArticleScreenState extends ConsumerState<ArticleScreen> {
   }
 
   Future<void> _shareArticle(String title) async {
-    final url = 'https://rasa.app/article/${widget.articleId}';
-    final text = '$title\n\nBaca di Rasa:\n$url';
+    final article =
+        ref.read(articleDetailProvider(widget.articleId)).valueOrNull;
+    if (article == null) return;
 
-    try {
-      await Share.share(text, subject: title);
-    } catch (e) {
-      await Clipboard.setData(ClipboardData(text: text));
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Link disalin ke clipboard')),
-        );
-      }
-    }
+    if (!mounted) return;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ShareCardScreen(article: article),
+      ),
+    );
   }
 
   @override
@@ -108,6 +130,8 @@ class _ArticleScreenState extends ConsumerState<ArticleScreen> {
         isDark ? const Color(0xFF89899F) : const Color(0xFFA58A79);
     final inputIconBg = isDark ? AppColors.lavender : AppColors.terracotta;
     final inputIconColor = isDark ? AppColors.midnight : Colors.white;
+    final progressColor =
+        isDark ? AppColors.lavender : AppColors.terracotta;
 
     final articleAsync = ref.watch(articleDetailProvider(widget.articleId));
     final isLikedAsync = ref.watch(isLikedProvider(widget.articleId));
@@ -155,171 +179,217 @@ class _ArticleScreenState extends ConsumerState<ArticleScreen> {
 
           return SafeArea(
             top: false,
-            child: Column(
+            child: Stack(
               children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: EdgeInsets.zero,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SafeArea(
-                          bottom: false,
-                          child: ArticleHero(
-                            coverUrl: article.coverUrl,
-                            readTime: article.readTime.toUpperCase(),
-                            onBack: () => context.go('/home'),
-                            onShare: () => _shareArticle(article.title),
-                            onBookmark: () async {
-                              final isBookmarked =
-                                  isBookmarkedAsync.valueOrNull ?? false;
-                              await _toggleBookmark(isBookmarked);
-                            },
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 17, 20, 20),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 7,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: tagBg,
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  article.tag,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 7.5,
-                                    fontWeight: FontWeight.w600,
-                                    color: tagText,
-                                  ),
-                                ),
+                Column(
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        controller: _scrollController,
+                        padding: EdgeInsets.zero,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SafeArea(
+                              bottom: false,
+                              child: ArticleHero(
+                                coverUrl: article.coverUrl,
+                                readTime: article.readTime.toUpperCase(),
+                                onBack: () => context.go('/home'),
+                                onShare: () => _shareArticle(article.title),
+                                onBookmark: () async {
+                                  final isBookmarked =
+                                      isBookmarkedAsync.valueOrNull ?? false;
+                                  await _toggleBookmark(isBookmarked);
+                                },
                               ),
-                              const SizedBox(height: 9),
-                              Text(
-                                article.title,
-                                style: GoogleFonts.playfairDisplay(
-                                  fontSize: 25,
-                                  fontWeight: FontWeight.w600,
-                                  height: 1.04,
-                                  letterSpacing: -1.4,
-                                  color: titleColor,
-                                ),
-                              ),
-                              const SizedBox(height: 11),
-                              ArticleMeta(
-                                authorId: article.authorId,
-                                authorName: article.authorName,
-                                authorAvatarUrl: article.authorAvatarUrl,
-                                date: article.date,
-                                readTime: article.readTime,
-                                views: article.views,
-                              ),
-                              const SizedBox(height: 15),
-                              Container(height: 1, color: dividerColor),
-                              const SizedBox(height: 14),
-                              const ArticleBody(),
-                              const SizedBox(height: 20),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                            ),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.fromLTRB(20, 17, 20, 20),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  RichText(
-                                    text: TextSpan(
-                                      style: GoogleFonts.playfairDisplay(
-                                        fontSize: 13,
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 7,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: tagBg,
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      article.tag,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 7.5,
                                         fontWeight: FontWeight.w600,
-                                        color: commentsHeadingColor,
+                                        color: tagText,
                                       ),
-                                      children: [
-                                        const TextSpan(
-                                          text: 'Ruang percakapan ',
+                                    ),
+                                  ),
+                                  const SizedBox(height: 9),
+                                  Text(
+                                    article.title,
+                                    style: GoogleFonts.playfairDisplay(
+                                      fontSize: 25,
+                                      fontWeight: FontWeight.w600,
+                                      height: 1.04,
+                                      letterSpacing: -1.4,
+                                      color: titleColor,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 11),
+                                  ArticleMeta(
+                                    authorId: article.authorId,
+                                    authorName: article.authorName,
+                                    authorAvatarUrl:
+                                        article.authorAvatarUrl,
+                                    date: article.date,
+                                    readTime: article.readTime,
+                                    views: article.views,
+                                  ),
+                                  const SizedBox(height: 15),
+                                  Container(height: 1, color: dividerColor),
+                                  const SizedBox(height: 14),
+                                  const ArticleBody(),
+                                  const SizedBox(height: 20),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      RichText(
+                                        text: TextSpan(
+                                          style:
+                                              GoogleFonts.playfairDisplay(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            color: commentsHeadingColor,
+                                          ),
+                                          children: [
+                                            const TextSpan(
+                                              text: 'Ruang percakapan ',
+                                            ),
+                                            TextSpan(
+                                              text:
+                                                  '${commentCountAsync.valueOrNull ?? 0}',
+                                              style: GoogleFonts.inter(
+                                                fontSize: 9,
+                                                fontWeight: FontWeight.w500,
+                                                color: commentsCountColor,
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                        TextSpan(
-                                          text:
-                                              '${commentCountAsync.valueOrNull ?? 0}',
+                                      ),
+                                      GestureDetector(
+                                        onTap: () => context.go(
+                                            '/comments/${widget.articleId}'),
+                                        child: Text(
+                                          'Lihat semua',
                                           style: GoogleFonts.inter(
-                                            fontSize: 9,
-                                            fontWeight: FontWeight.w500,
-                                            color: commentsCountColor,
+                                            fontSize: 8,
+                                            color: linkColor,
                                           ),
                                         ),
-                                      ],
-                                    ),
-                                  ),
-                                  GestureDetector(
-                                    onTap: () => context.go(
-                                        '/comments/${widget.articleId}'),
-                                    child: Text(
-                                      'Lihat semua',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 8,
-                                        color: linkColor,
                                       ),
-                                    ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              if (commentCountAsync.valueOrNull != null &&
-                                  (commentCountAsync.valueOrNull ?? 0) > 0)
-                                Consumer(
-                                  builder: (context, ref, _) {
-                                    final commentsAsync = ref.watch(
-                                        commentsProvider(widget.articleId));
-                                    return commentsAsync.when(
-                                      loading: () => const SizedBox.shrink(),
-                                      error: (_, __) =>
-                                          const SizedBox.shrink(),
-                                      data: (comments) {
-                                        if (comments.isEmpty) {
-                                          return const SizedBox.shrink();
-                                        }
-                                        final c = comments.first;
-                                        final profile = c['profiles']
-                                            as Map<String, dynamic>?;
-                                        return CommentPreview(
-                                          name: profile?['full_name'] ??
-                                              'Anonim',
-                                          avatarUrl:
-                                              profile?['avatar_url'] ?? '',
-                                          timeAgo: 'Baru saja',
-                                          comment: c['content'] ?? '',
+                                  const SizedBox(height: 12),
+                                  if (commentCountAsync.valueOrNull !=
+                                          null &&
+                                      (commentCountAsync.valueOrNull ??
+                                              0) >
+                                          0)
+                                    Consumer(
+                                      builder: (context, ref, _) {
+                                        final commentsAsync = ref.watch(
+                                            commentsProvider(
+                                                widget.articleId));
+                                        return commentsAsync.when(
+                                          loading: () =>
+                                              const SizedBox.shrink(),
+                                          error: (_, __) =>
+                                              const SizedBox.shrink(),
+                                          data: (comments) {
+                                            if (comments.isEmpty) {
+                                              return const SizedBox.shrink();
+                                            }
+                                            final c = comments.first;
+                                            final profile = c['profiles']
+                                                as Map<String, dynamic>?;
+                                            return CommentPreview(
+                                              name: profile?['full_name'] ??
+                                                  'Anonim',
+                                              avatarUrl: profile?[
+                                                      'avatar_url'] ??
+                                                  '',
+                                              timeAgo: 'Baru saja',
+                                              comment: c['content'] ?? '',
+                                            );
+                                          },
                                         );
                                       },
-                                    );
-                                  },
-                                ),
-                              const SizedBox(height: 80),
+                                    ),
+                                  const SizedBox(height: 80),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    ArticleActionBar(
+                      likes: likeCountAsync.valueOrNull ?? 0,
+                      comments: commentCountAsync.valueOrNull ?? 0,
+                      isLiked: isLikedAsync.valueOrNull ?? false,
+                      isBookmarked:
+                          isBookmarkedAsync.valueOrNull ?? false,
+                      onLike: () async {
+                        final isLiked = isLikedAsync.valueOrNull ?? false;
+                        await _toggleLike(isLiked);
+                      },
+                      onComment: () =>
+                          context.go('/comments/${widget.articleId}'),
+                      onShare: () => _shareArticle(article.title),
+                      onBookmark: () async {
+                        final isBookmarked =
+                            isBookmarkedAsync.valueOrNull ?? false;
+                        await _toggleBookmark(isBookmarked);
+                      },
+                    ),
+                  ],
+                ),
+
+                // ===================
+                // READING PROGRESS BAR
+                // ===================
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: SafeArea(
+                    bottom: false,
+                    child: Container(
+                      height: 3,
+                      color: Colors.transparent,
+                      child: FractionallySizedBox(
+                        alignment: Alignment.centerLeft,
+                        widthFactor: _readingProgress,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: progressColor,
+                            boxShadow: [
+                              BoxShadow(
+                                color: progressColor.withValues(alpha: 0.4),
+                                blurRadius: 4,
+                              ),
                             ],
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-                ArticleActionBar(
-                  likes: likeCountAsync.valueOrNull ?? 0,
-                  comments: commentCountAsync.valueOrNull ?? 0,
-                  isLiked: isLikedAsync.valueOrNull ?? false,
-                  isBookmarked: isBookmarkedAsync.valueOrNull ?? false,
-                  onLike: () async {
-                    final isLiked = isLikedAsync.valueOrNull ?? false;
-                    await _toggleLike(isLiked);
-                  },
-                  onComment: () =>
-                      context.go('/comments/${widget.articleId}'),
-                  onShare: () => _shareArticle(article.title),
-                  onBookmark: () async {
-                    final isBookmarked =
-                        isBookmarkedAsync.valueOrNull ?? false;
-                    await _toggleBookmark(isBookmarked);
-                  },
                 ),
               ],
             ),

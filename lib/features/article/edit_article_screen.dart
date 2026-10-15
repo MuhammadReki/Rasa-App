@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/theme_provider.dart';
+import '../../core/supabase/supabase_client.dart';
+import '../admin/providers/admin_provider.dart';
 import '../home/models/article.dart';
 import '../home/providers/article_provider.dart';
 import '../profile/providers/profile_provider.dart';
@@ -58,15 +60,34 @@ class _EditArticleScreenState extends ConsumerState<EditArticleScreen> {
     setState(() => _isSaving = true);
 
     try {
-      final repo = ref.read(profileRepositoryProvider);
-      await repo.updateArticle(
-        articleId: widget.article.id,
-        title: title,
-        content: content,
-        tag: _selectedTag,
-      );
+      final currentUserId =
+          ref.read(supabaseProvider).auth.currentUser?.id;
+      final isOwner = currentUserId == widget.article.authorId;
 
-      ref.invalidate(myArticlesProvider);
+      if (isOwner) {
+        // Owner — pakai profile repository
+        final repo = ref.read(profileRepositoryProvider);
+        await repo.updateArticle(
+          articleId: widget.article.id,
+          title: title,
+          content: content,
+          tag: _selectedTag,
+        );
+        ref.invalidate(myArticlesProvider);
+      } else {
+        // Admin — pakai admin repository (bypass owner check)
+        final adminRepo = ref.read(adminRepositoryProvider);
+        await adminRepo.updateArticle(
+          articleId: widget.article.id,
+          title: title,
+          content: content,
+          tag: _selectedTag,
+        );
+        ref.invalidate(pendingArticlesProvider);
+        ref.invalidate(allArticlesAdminProvider);
+        ref.invalidate(adminStatsProvider);
+      }
+
       ref.invalidate(articlesProvider);
 
       if (!mounted) return;

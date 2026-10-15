@@ -9,12 +9,7 @@ class AdminRepository {
   /// Cek apakah user saat ini adalah admin
   Future<bool> isAdmin() async {
     final userId = _supabase.auth.currentUser?.id;
-    print('🔍 IS ADMIN - userId: $userId');
-
-    if (userId == null) {
-      print('🔍 IS ADMIN - USER NULL, return false');
-      return false;
-    }
+    if (userId == null) return false;
 
     try {
       final data = await _supabase
@@ -22,16 +17,8 @@ class AdminRepository {
           .select('role')
           .eq('id', userId)
           .maybeSingle();
-
-      print('🔍 IS ADMIN - data dari DB: $data');
-      print('🔍 IS ADMIN - role: ${data?['role']}');
-
-      final isAdmin = data?['role'] == 'admin';
-      print('🔍 IS ADMIN - hasil: $isAdmin');
-      return isAdmin;
-    } catch (e, stack) {
-      print('🔍 IS ADMIN - ERROR: $e');
-      print('🔍 IS ADMIN - STACK: $stack');
+      return data?['role'] == 'admin';
+    } catch (_) {
       return false;
     }
   }
@@ -83,6 +70,25 @@ class AdminRepository {
   /// Delete artikel (admin)
   Future<void> deleteArticle(String articleId) async {
     await _supabase.from('articles').delete().eq('id', articleId);
+  }
+
+  /// Update artikel (admin) — edit title, content, tag
+  Future<void> updateArticle({
+    required String articleId,
+    required String title,
+    required String content,
+    required String tag,
+  }) async {
+    final preview = content.length > 150
+        ? '${content.substring(0, 150)}...'
+        : content;
+
+    await _supabase.from('articles').update({
+      'title': title,
+      'content': content,
+      'preview': preview,
+      'tag': tag,
+    }).eq('id', articleId);
   }
 
   /// Stats untuk dashboard admin

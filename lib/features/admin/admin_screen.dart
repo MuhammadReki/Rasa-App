@@ -15,15 +15,17 @@ class AdminScreen extends ConsumerStatefulWidget {
 }
 
 class _AdminScreenState extends ConsumerState<AdminScreen> {
-  int _currentTab = 0; // 0: Pending, 1: Published, 2: Stats
+  int _currentTab = 0; // 0: Pending, 1: Semua, 2: Stats
 
+  // ===================
+  // APPROVE
+  // ===================
   Future<void> _approve(Article article) async {
     try {
       await ref.read(adminRepositoryProvider).approveArticle(article.id);
-
       ref.invalidate(pendingArticlesProvider);
+      ref.invalidate(allArticlesAdminProvider);
       ref.invalidate(adminStatsProvider);
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('"${article.title}" dipublikasikan')),
@@ -38,6 +40,9 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
     }
   }
 
+  // ===================
+  // REJECT
+  // ===================
   Future<void> _reject(Article article) async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -64,10 +69,9 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
 
     try {
       await ref.read(adminRepositoryProvider).rejectArticle(article.id);
-
       ref.invalidate(pendingArticlesProvider);
+      ref.invalidate(allArticlesAdminProvider);
       ref.invalidate(adminStatsProvider);
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('"${article.title}" ditolak')),
@@ -82,6 +86,196 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
     }
   }
 
+  // ===================
+  // DELETE
+  // ===================
+  Future<void> _delete(Article article) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Hapus artikel?'),
+        content: Text(
+          '"${article.title}" akan dihapus permanen. Gak bisa dikembalikan.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'Hapus',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      await ref.read(adminRepositoryProvider).deleteArticle(article.id);
+      ref.invalidate(pendingArticlesProvider);
+      ref.invalidate(allArticlesAdminProvider);
+      ref.invalidate(adminStatsProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('"${article.title}" dihapus')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal hapus: $e')),
+        );
+      }
+    }
+  }
+
+  // ===================
+  // BOTTOM SHEET — Aksi Artikel
+  // ===================
+  void _showActions(Article article, bool isDark, Color textPrimary,
+      Color textSecondary, Color accent, Color surface) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Handle bar
+                Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: textSecondary.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Aksi Artikel',
+                      style: GoogleFonts.playfairDisplay(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: textPrimary,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                _buildActionTile(
+                  icon: Icons.edit_outlined,
+                  label: 'Edit Artikel',
+                  color: accent,
+                  textPrimary: textPrimary,
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.push('/edit-article', extra: article);
+                  },
+                ),
+
+                if (article.tag.isNotEmpty)
+                  _buildActionTile(
+                    icon: Icons.check_circle_outline,
+                    label: 'Approve & Publikasikan',
+                    color: const Color(0xFF8FA88F),
+                    textPrimary: textPrimary,
+                    onTap: () {
+                      Navigator.pop(context);
+                      _approve(article);
+                    },
+                  ),
+
+                _buildActionTile(
+                  icon: Icons.close,
+                  label: 'Tolak Artikel',
+                  color: const Color(0xFFB4694D),
+                  textPrimary: textPrimary,
+                  onTap: () {
+                    Navigator.pop(context);
+                    _reject(article);
+                  },
+                ),
+
+                _buildActionTile(
+                  icon: Icons.delete_outline,
+                  label: 'Hapus Permanen',
+                  color: Colors.red,
+                  textPrimary: textPrimary,
+                  onTap: () {
+                    Navigator.pop(context);
+                    _delete(article);
+                  },
+                ),
+
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildActionTile({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required Color textPrimary,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, size: 18, color: color),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                label,
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: textPrimary,
+                ),
+              ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              size: 18,
+              color: textPrimary.withValues(alpha: 0.4),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeMode = ref.watch(themeProvider);
@@ -94,6 +288,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
     final accent = AppColors.accent(isDark);
 
     final pendingAsync = ref.watch(pendingArticlesProvider);
+    final allAsync = ref.watch(allArticlesAdminProvider);
     final statsAsync = ref.watch(adminStatsProvider);
 
     return Scaffold(
@@ -159,8 +354,26 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
               child: _currentTab == 2
                   ? _buildStats(statsAsync, isDark, textPrimary, textSecondary,
                       accent)
-                  : _buildPendingList(
-                      pendingAsync, isDark, textPrimary, textSecondary, accent),
+                  : _currentTab == 1
+                      ? _buildList(
+                          allAsync,
+                          isDark,
+                          textPrimary,
+                          textSecondary,
+                          accent,
+                          surface,
+                          showActions: true,
+                        )
+                      : _buildList(
+                          pendingAsync,
+                          isDark,
+                          textPrimary,
+                          textSecondary,
+                          accent,
+                          surface,
+                          showActions: true,
+                          showApproveReject: true,
+                        ),
             ),
           ],
         ),
@@ -196,6 +409,9 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
     );
   }
 
+  // ===================
+  // STATS
+  // ===================
   Widget _buildStats(
     AsyncValue<Map<String, int>> statsAsync,
     bool isDark,
@@ -310,14 +526,20 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
     );
   }
 
-  Widget _buildPendingList(
-    AsyncValue<List<Article>> pendingAsync,
+  // ===================
+  // LIST ARTIKEL
+  // ===================
+  Widget _buildList(
+    AsyncValue<List<Article>> async,
     bool isDark,
     Color textPrimary,
     Color textSecondary,
     Color accent,
-  ) {
-    return pendingAsync.when(
+    Color surface, {
+    bool showActions = false,
+    bool showApproveReject = false,
+  }) {
+    return async.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (err, _) => Center(
         child: Text(
@@ -349,7 +571,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Gak ada artikel yang perlu direview.',
+                    'Gak ada artikel di sini.',
                     style: GoogleFonts.inter(
                       fontSize: 11,
                       color: textSecondary,
@@ -367,12 +589,15 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
           separatorBuilder: (_, __) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
             final article = articles[index];
-            return _buildPendingCard(
+            return _buildArticleCard(
               article,
               isDark,
               textPrimary,
               textSecondary,
               accent,
+              surface,
+              showActions: showActions,
+              showApproveReject: showApproveReject,
             );
           },
         );
@@ -380,16 +605,22 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
     );
   }
 
-  Widget _buildPendingCard(
+  // ===================
+  // CARD ARTIKEL
+  // ===================
+  Widget _buildArticleCard(
     Article article,
     bool isDark,
     Color textPrimary,
     Color textSecondary,
     Color accent,
-  ) {
+    Color surface, {
+    bool showActions = false,
+    bool showApproveReject = false,
+  }) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface(isDark),
+        color: surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.dividerColor(isDark)),
       ),
@@ -400,17 +631,43 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
           ClipRRect(
             borderRadius:
                 const BorderRadius.vertical(top: Radius.circular(14)),
-            child: Image.network(
-              article.coverUrl,
-              height: 120,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                height: 120,
-                color: isDark
-                    ? const Color(0xFF3A3A55)
-                    : const Color(0xFFF0E4D6),
-              ),
+            child: Stack(
+              children: [
+                Image.network(
+                  article.coverUrl,
+                  height: 120,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    height: 120,
+                    color: isDark
+                        ? const Color(0xFF3A3A55)
+                        : const Color(0xFFF0E4D6),
+                  ),
+                ),
+                if (showActions)
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: GestureDetector(
+                      onTap: () => _showActions(article, isDark, textPrimary,
+                          textSecondary, accent, surface),
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.5),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.more_horiz,
+                          size: 18,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
           Padding(
@@ -443,11 +700,14 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
                       color: textSecondary,
                     ),
                     const SizedBox(width: 4),
-                    Text(
-                      article.authorName,
-                      style: GoogleFonts.inter(
-                        fontSize: 8,
-                        color: textSecondary,
+                    Expanded(
+                      child: Text(
+                        article.authorName,
+                        style: GoogleFonts.inter(
+                          fontSize: 8,
+                          color: textSecondary,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
@@ -476,77 +736,78 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
                     color: textSecondary,
                   ),
                 ),
-                const SizedBox(height: 12),
-                // Action buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => _approve(article),
-                        child: Container(
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF8FA88F),
-                            borderRadius: BorderRadius.circular(9),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                Icons.check,
-                                size: 15,
-                                color: Colors.white,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Approve',
-                                style: GoogleFonts.inter(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
+                if (showApproveReject) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => _approve(article),
+                          child: Container(
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF8FA88F),
+                              borderRadius: BorderRadius.circular(9),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.check,
+                                  size: 15,
                                   color: Colors.white,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Approve',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => _reject(article),
-                        child: Container(
-                          height: 36,
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: Colors.red.withValues(alpha: 0.5),
-                            ),
-                            borderRadius: BorderRadius.circular(9),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                Icons.close,
-                                size: 15,
-                                color: Colors.red,
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => _reject(article),
+                          child: Container(
+                            height: 36,
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: Colors.red.withValues(alpha: 0.5),
                               ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Tolak',
-                                style: GoogleFonts.inter(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
+                              borderRadius: BorderRadius.circular(9),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.close,
+                                  size: 15,
                                   color: Colors.red,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Tolak',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.red,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
