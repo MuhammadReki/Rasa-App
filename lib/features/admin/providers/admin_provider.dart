@@ -7,8 +7,11 @@ final adminRepositoryProvider = Provider<AdminRepository>((ref) {
   return AdminRepository(ref.watch(supabaseProvider));
 });
 
-/// Cek apakah user admin
+/// Cek apakah user admin — auto-refresh saat auth berubah
 final isAdminProvider = FutureProvider<bool>((ref) async {
+  // Watch auth state biar auto re-check pas login/logout
+  ref.watch(currentUserProvider);
+
   return ref.watch(adminRepositoryProvider).isAdmin();
 });
 

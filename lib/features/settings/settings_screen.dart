@@ -174,14 +174,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         final isAdminAsync = ref.watch(isAdminProvider);
                         return isAdminAsync.when(
                           loading: () => const SizedBox.shrink(),
-                          error: (_, __) => const SizedBox.shrink(),
+                          error: (err, _) {
+                            debugPrint('🔍 SETTINGS - ERROR: $err');
+                            return const SizedBox.shrink();
+                          },
                           data: (isAdmin) {
+                            debugPrint('🔍 SETTINGS - isAdmin = $isAdmin');
                             if (!isAdmin) return const SizedBox.shrink();
                             return Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                _buildGroupLabel(
-                                    'ADMIN', textSecondary),
+                                _buildGroupLabel('ADMIN', textSecondary),
                                 _buildClickRow(
                                   icon: Icons.admin_panel_settings,
                                   label: 'Admin Panel',

@@ -9,15 +9,31 @@ class AdminRepository {
   /// Cek apakah user saat ini adalah admin
   Future<bool> isAdmin() async {
     final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) return false;
+    print('🔍 IS ADMIN - userId: $userId');
 
-    final data = await _supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', userId)
-        .maybeSingle();
+    if (userId == null) {
+      print('🔍 IS ADMIN - USER NULL, return false');
+      return false;
+    }
 
-    return data?['role'] == 'admin';
+    try {
+      final data = await _supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', userId)
+          .maybeSingle();
+
+      print('🔍 IS ADMIN - data dari DB: $data');
+      print('🔍 IS ADMIN - role: ${data?['role']}');
+
+      final isAdmin = data?['role'] == 'admin';
+      print('🔍 IS ADMIN - hasil: $isAdmin');
+      return isAdmin;
+    } catch (e, stack) {
+      print('🔍 IS ADMIN - ERROR: $e');
+      print('🔍 IS ADMIN - STACK: $stack');
+      return false;
+    }
   }
 
   /// Fetch artikel yang perlu direview (status: pending)
@@ -81,9 +97,7 @@ class AdminRepository {
         .select('id')
         .eq('status', 'published');
 
-    final users = await _supabase
-        .from('profiles')
-        .select('id');
+    final users = await _supabase.from('profiles').select('id');
 
     return {
       'pending': (pending as List).length,
