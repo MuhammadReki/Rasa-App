@@ -281,7 +281,7 @@ class ArticleCard extends ConsumerWidget {
     return Container(
       width: 2,
       height: 2,
-      decoration: BoxDecoration(
+      decoration: BoxDecoration(  
         color: color,
         shape: BoxShape.circle,
       ),

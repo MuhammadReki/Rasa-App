@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class OnboardingArtJournal extends StatelessWidget {
   const OnboardingArtJournal({super.key});
@@ -24,7 +24,7 @@ class OnboardingArtJournal extends StatelessWidget {
               height: 77,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFEFBF9D).withValues(alpha: 0.75),
+                color: const Color(0xFFEFBF9D).withOpacity(0.75),
               ),
             ),
           ),
@@ -125,7 +125,7 @@ class OnboardingArtJournal extends StatelessWidget {
                   borderRadius: BorderRadius.circular(6),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF583624).withValues(alpha: 0.13),
+                      color: const Color(0xFF583624).withOpacity(0.13),
                       blurRadius: 8,
                       offset: const Offset(0, 6),
                     ),

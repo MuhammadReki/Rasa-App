@@ -19,7 +19,7 @@ class AuthOrDivider extends ConsumerWidget {
         : const Color(0xFFA78A78);
 
     return Row(
-      children: [
+      children: [ 
         Expanded(
           child: Divider(color: dividerColor, thickness: 1),
         ),

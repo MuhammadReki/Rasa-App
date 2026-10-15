@@ -22,3 +22,10 @@ subprojects {
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
+
+// ===================
+// Firebase Google Services
+// ===================
+plugins {
+    id("com.google.gms.google-services") version "4.3.15" apply false
+}

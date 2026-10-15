@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/notifications/notification_service.dart';
 import '../../../core/supabase/supabase_client.dart';
 
 /// Current user (reactive)
@@ -35,6 +36,15 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
         email: email,
         password: password,
       );
+
+      // ✅ Init + simpen FCM token ke Supabase
+      try {
+        await NotificationService.instance.initialize();
+        await NotificationService.instance.refreshToken();
+      } catch (e) {
+        print('⚠️ Notification init error: $e');
+      }
+
       state = const AsyncValue.data(null);
       return true;
     } catch (e, st) {
@@ -58,6 +68,17 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
           'username': '@${fullName.toLowerCase().replaceAll(' ', '')}',
         },
       );
+
+      // ✅ Init + simpen FCM token ke Supabase (kalau udah ada session)
+      try {
+        if (_supabase.auth.currentUser != null) {
+          await NotificationService.instance.initialize();
+          await NotificationService.instance.refreshToken();
+        }
+      } catch (e) {
+        print('⚠️ Notification init error: $e');
+      }
+
       state = const AsyncValue.data(null);
       return true;
     } catch (e, st) {
@@ -67,6 +88,13 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
   }
 
   Future<void> signOut() async {
+    // ✅ Hapus FCM token dari Supabase sebelum logout
+    try {
+      await NotificationService.instance.deleteToken();
+    } catch (e) {
+      print('⚠️ Delete token error: $e');
+    }
+
     await _supabase.auth.signOut();
   }
 }
