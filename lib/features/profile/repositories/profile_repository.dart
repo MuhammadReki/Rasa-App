@@ -13,7 +13,7 @@ class ProfileRepository {
     final data = await _supabase
         .from('articles')
         .select('''
-          id, title, preview, cover_url, tag, created_at, view_count,
+          id, author_id, title, preview, cover_url, tag, created_at, view_count,
           profiles!articles_author_id_fkey (full_name, avatar_url)
         ''')
         .eq('author_id', userId)
@@ -31,7 +31,7 @@ class ProfileRepository {
         .select('''
           article_id,
           articles!likes_article_id_fkey (
-            id, title, preview, cover_url, tag, created_at, view_count,
+            id, author_id, title, preview, cover_url, tag, created_at, view_count,
             profiles!articles_author_id_fkey (full_name, avatar_url)
           )
         ''')
@@ -53,7 +53,7 @@ class ProfileRepository {
         .select('''
           article_id,
           articles!bookmarks_article_id_fkey (
-            id, title, preview, cover_url, tag, created_at, view_count,
+            id, author_id, title, preview, cover_url, tag, created_at, view_count,
             profiles!articles_author_id_fkey (full_name, avatar_url)
           )
         ''')
@@ -102,10 +102,72 @@ class ProfileRepository {
         .eq('author_id', userId);
   }
 
+  // ===================
+  // FOLLOW SYSTEM
+  // ===================
+  Future<bool> isFollowing({
+    required String followerId,
+    required String followingId,
+  }) async {
+    final data = await _supabase
+        .from('follows')
+        .select('id')
+        .eq('follower_id', followerId)
+        .eq('following_id', followingId)
+        .maybeSingle();
+    return data != null;
+  }
+
+  Future<void> follow({
+    required String followerId,
+    required String followingId,
+  }) async {
+    await _supabase.from('follows').insert({
+      'follower_id': followerId,
+      'following_id': followingId,
+    });
+  }
+
+  Future<void> unfollow({
+    required String followerId,
+    required String followingId,
+  }) async {
+    await _supabase
+        .from('follows')
+        .delete()
+        .eq('follower_id', followerId)
+        .eq('following_id', followingId);
+  }
+
+  Future<int> countFollowers(String userId) async {
+    final data = await _supabase
+        .from('follows')
+        .select('id')
+        .eq('following_id', userId);
+    return (data as List).length;
+  }
+
+  Future<int> countFollowing(String userId) async {
+    final data = await _supabase
+        .from('follows')
+        .select('id')
+        .eq('follower_id', userId);
+    return (data as List).length;
+  }
+
+  Future<Map<String, dynamic>?> fetchProfileById(String userId) async {
+    return await _supabase
+        .from('profiles')
+        .select('id, full_name, username, bio, avatar_url')
+        .eq('id', userId)
+        .maybeSingle();
+  }
+
   Article _mapToArticle(Map<String, dynamic> json) {
     final profile = json['profiles'] as Map<String, dynamic>?;
     return Article(
       id: json['id'] as String,
+      authorId: json['author_id'] as String? ?? '',
       title: json['title'] as String,
       preview: json['preview'] as String? ?? '',
       coverUrl: json['cover_url'] as String? ?? '',

@@ -10,7 +10,7 @@ class ArticleRepository {
     var query = _supabase
         .from('articles')
         .select('''
-          id, title, content, preview, cover_url, tag, created_at, view_count,
+          id, author_id, title, content, preview, cover_url, tag, created_at, view_count,
           profiles!articles_author_id_fkey (full_name, avatar_url)
         ''')
         .eq('status', 'published');
@@ -27,7 +27,7 @@ class ArticleRepository {
     final data = await _supabase
         .from('articles')
         .select('''
-          id, title, content, preview, cover_url, tag, created_at, view_count,
+          id, author_id, title, content, preview, cover_url, tag, created_at, view_count,
           profiles!articles_author_id_fkey (full_name, avatar_url)
         ''')
         .eq('id', id)
@@ -49,7 +49,7 @@ class ArticleRepository {
     final data = await _supabase
         .from('articles')
         .select('''
-          id, title, content, preview, cover_url, tag, created_at, view_count,
+          id, author_id, title, content, preview, cover_url, tag, created_at, view_count,
           profiles!articles_author_id_fkey (full_name, avatar_url)
         ''')
         .eq('status', 'published')
@@ -114,7 +114,7 @@ class ArticleRepository {
     final data = await _supabase
         .from('articles')
         .select('''
-          id, title, content, preview, cover_url, tag, created_at, view_count,
+          id, author_id, title, content, preview, cover_url, tag, created_at, view_count,
           profiles!articles_author_id_fkey (full_name, avatar_url)
         ''')
         .eq('author_id', userId)
@@ -125,8 +125,14 @@ class ArticleRepository {
 
   Article _mapToArticle(Map<String, dynamic> json) {
     final profile = json['profiles'] as Map<String, dynamic>?;
+    final content = json['content'] as String? ?? '';
+    final wordCount =
+        content.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length;
+    final readMinutes = (wordCount / 200).ceil();
+
     return Article(
       id: json['id'] as String,
+      authorId: json['author_id'] as String? ?? '',
       title: json['title'] as String,
       preview: json['preview'] as String? ?? '',
       coverUrl: json['cover_url'] as String? ?? '',
@@ -134,7 +140,7 @@ class ArticleRepository {
       authorName: profile?['full_name'] as String? ?? 'Anonim',
       authorAvatarUrl: profile?['avatar_url'] as String? ?? '',
       date: _formatDate(json['created_at'] as String),
-      readTime: '5 min',
+      readTime: '${readMinutes < 1 ? 1 : readMinutes} min',
       likes: 0,
       comments: 0,
       views: json['view_count'] as int? ?? 0,

@@ -1,5 +1,6 @@
 class Article {
   final String id;
+  final String authorId;
   final String title;
   final String preview;
   final String coverUrl;
@@ -10,10 +11,11 @@ class Article {
   final String readTime;
   final int likes;
   final int comments;
-  final int views;  // ← HARUS ADA
+  final int views;
 
   const Article({
     required this.id,
+    this.authorId = '',
     required this.title,
     required this.preview,
     required this.coverUrl,
@@ -24,6 +26,6 @@ class Article {
     required this.readTime,
     this.likes = 0,
     this.comments = 0,
-    this.views = 0,  // ← HARUS ADA
+    this.views = 0,
   });
 }

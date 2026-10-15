@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/theme_provider.dart';
@@ -59,29 +60,53 @@ class HomeHeader extends ConsumerWidget {
         ),
         Row(
           children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: iconBg,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: (isDark ? Colors.black : const Color(0xFF3E2C23))
-                        .withValues(alpha: 0.07),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+            // Bell — tappable ke notifikasi
+            GestureDetector(
+              onTap: () => context.push('/notifications'),
+              child: Stack(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: iconBg,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: (isDark ? Colors.black : const Color(0xFF3E2C23))
+                              .withValues(alpha: 0.07),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.notifications_none,
+                      size: 18,
+                      color: iconColor,
+                    ),
+                  ),
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Container(
+                      width: 7,
+                      height: 7,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFC97B5A),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
                   ),
                 ],
               ),
-              child: Icon(
-                Icons.notifications_none,
-                size: 18,
-                color: iconColor,
-              ),
             ),
             const SizedBox(width: 8),
-            _buildAvatar(avatarUrl, isDark),
+            // Avatar — tappable ke profile
+            GestureDetector(
+              onTap: () => context.go('/profile'),
+              child: _buildAvatar(avatarUrl, isDark),
+            ),
           ],
         ),
       ],

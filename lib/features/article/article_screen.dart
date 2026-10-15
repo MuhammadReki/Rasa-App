@@ -167,7 +167,7 @@ class _ArticleScreenState extends ConsumerState<ArticleScreen> {
                           bottom: false,
                           child: ArticleHero(
                             coverUrl: article.coverUrl,
-                            readTime: '5 MIN READ',
+                            readTime: article.readTime.toUpperCase(),
                             onBack: () => context.go('/home'),
                             onShare: () => _shareArticle(article.title),
                             onBookmark: () async {
@@ -213,10 +213,12 @@ class _ArticleScreenState extends ConsumerState<ArticleScreen> {
                               ),
                               const SizedBox(height: 11),
                               ArticleMeta(
+                                authorId: article.authorId,
                                 authorName: article.authorName,
                                 authorAvatarUrl: article.authorAvatarUrl,
                                 date: article.date,
                                 readTime: article.readTime,
+                                views: article.views,
                               ),
                               const SizedBox(height: 15),
                               Container(height: 1, color: dividerColor),
@@ -285,8 +287,7 @@ class _ArticleScreenState extends ConsumerState<ArticleScreen> {
                                           name: profile?['full_name'] ??
                                               'Anonim',
                                           avatarUrl:
-                                              profile?['avatar_url'] ??
-                                                  '',
+                                              profile?['avatar_url'] ?? '',
                                           timeAgo: 'Baru saja',
                                           comment: c['content'] ?? '',
                                         );

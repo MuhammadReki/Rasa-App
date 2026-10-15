@@ -10,11 +10,14 @@ import '../../features/article/edit_article_screen.dart';
 import '../../features/search/search_screen.dart';
 import '../../features/bookmark/bookmarks_screen.dart';
 import '../../features/profile/profile_screen.dart';
+import '../../features/profile/user_profile_screen.dart';
 import '../../features/settings/settings_screen.dart';
 import '../../features/profile/edit_profile_screen.dart';
 import '../../features/submit/submit_story_screen.dart';
 import '../../features/comments/comments_screen.dart';
 import '../../features/notifications/notifications_screen.dart';
+import '../../features/report/report_screen.dart';
+import '../../features/admin/admin_screen.dart';
 
 class AppRouter {
   AppRouter._();
@@ -24,14 +27,11 @@ class AppRouter {
     routes: [
       GoRoute(path: '/splash', builder: (c, s) => const SplashScreen()),
       GoRoute(
-        path: '/onboarding',
-        builder: (c, s) => const OnboardingScreen(),
-      ),
+          path: '/onboarding',
+          builder: (c, s) => const OnboardingScreen()),
       GoRoute(path: '/login', builder: (c, s) => const LoginScreen()),
       GoRoute(
-        path: '/register',
-        builder: (c, s) => const RegisterScreen(),
-      ),
+          path: '/register', builder: (c, s) => const RegisterScreen()),
       GoRoute(path: '/home', builder: (c, s) => const HomeScreen()),
       GoRoute(
         path: '/article/:id',
@@ -49,17 +49,18 @@ class AppRouter {
       ),
       GoRoute(path: '/search', builder: (c, s) => const SearchScreen()),
       GoRoute(
-        path: '/bookmarks',
-        builder: (c, s) => const BookmarksScreen(),
+          path: '/bookmarks', builder: (c, s) => const BookmarksScreen()),
+      GoRoute(
+          path: '/profile', builder: (c, s) => const ProfileScreen()),
+      GoRoute(
+        path: '/user/:id',
+        builder: (c, s) {
+          final id = s.pathParameters['id'] ?? '';
+          return UserProfileScreen(userId: id);
+        },
       ),
       GoRoute(
-        path: '/profile',
-        builder: (c, s) => const ProfileScreen(),
-      ),
-      GoRoute(
-        path: '/settings',
-        builder: (c, s) => const SettingsScreen(),
-      ),
+          path: '/settings', builder: (c, s) => const SettingsScreen()),
       GoRoute(
         path: '/edit-profile',
         builder: (c, s) => const EditProfileScreen(),
@@ -78,6 +79,20 @@ class AppRouter {
       GoRoute(
         path: '/notifications',
         builder: (c, s) => const NotificationsScreen(),
+      ),
+      GoRoute(
+        path: '/report',
+        builder: (c, s) {
+          final extra = s.extra as Map<String, dynamic>?;
+          return ReportScreen(
+            articleId: extra?['articleId'] as String?,
+            commentId: extra?['commentId'] as String?,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/admin',
+        builder: (c, s) => const AdminScreen(),
       ),
     ],
   );

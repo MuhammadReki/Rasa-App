@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/theme_provider.dart';
 import '../auth/providers/auth_provider.dart';
+import '../admin/providers/admin_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -163,8 +164,44 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       dividerColor: dividerColor,
                       isDark: isDark,
                     ),
-                    const SizedBox(height: 24),
-                    // Logout button
+                    const SizedBox(height: 20),
+
+                    // ===================
+                    // ADMIN PANEL (cuma muncul kalau admin)
+                    // ===================
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final isAdminAsync = ref.watch(isAdminProvider);
+                        return isAdminAsync.when(
+                          loading: () => const SizedBox.shrink(),
+                          error: (_, __) => const SizedBox.shrink(),
+                          data: (isAdmin) {
+                            if (!isAdmin) return const SizedBox.shrink();
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildGroupLabel(
+                                    'ADMIN', textSecondary),
+                                _buildClickRow(
+                                  icon: Icons.admin_panel_settings,
+                                  label: 'Admin Panel',
+                                  textPrimary: textPrimary,
+                                  textSecondary: textSecondary,
+                                  dividerColor: dividerColor,
+                                  isDark: isDark,
+                                  onTap: () => context.push('/admin'),
+                                ),
+                                const SizedBox(height: 20),
+                              ],
+                            );
+                          },
+                        );
+                      },
+                    ),
+
+                    // ===================
+                    // LOGOUT
+                    // ===================
                     GestureDetector(
                       onTap: _handleLogout,
                       child: Container(
@@ -266,7 +303,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: Colors.white,
+            activeThumbColor: Colors.white,
             activeTrackColor: AppColors.lavender,
             inactiveThumbColor: Colors.white,
             inactiveTrackColor: isDark
@@ -286,40 +323,44 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     required Color textSecondary,
     required Color dividerColor,
     required bool isDark,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      height: 50,
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: dividerColor)),
-      ),
-      child: Row(
-        children: [
-          _buildIconBox(icon, isDark),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              label,
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                color: textPrimary,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 50,
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: dividerColor)),
+        ),
+        child: Row(
+          children: [
+            _buildIconBox(icon, isDark),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  color: textPrimary,
+                ),
               ),
             ),
-          ),
-          if (trailing != null)
-            Text(
-              trailing,
-              style: GoogleFonts.inter(
-                fontSize: 9,
-                color: textSecondary,
+            if (trailing != null)
+              Text(
+                trailing,
+                style: GoogleFonts.inter(
+                  fontSize: 9,
+                  color: textSecondary,
+                ),
               ),
+            const SizedBox(width: 6),
+            Icon(
+              Icons.chevron_right,
+              size: 16,
+              color: textSecondary,
             ),
-          const SizedBox(width: 6),
-          Icon(
-            Icons.chevron_right,
-            size: 16,
-            color: textSecondary,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
