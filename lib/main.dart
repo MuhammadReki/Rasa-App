@@ -41,7 +41,7 @@ Future<void> main() async {
     debugPrint('Session exists: ${session != null}');
     debugPrint('User: ${Supabase.instance.client.auth.currentUser?.email}');
     debugPrint('=================');
-  } catch (e) {
+  } catch (e) { 
     debugPrint('❌ Supabase init error: $e');
   }
 
