@@ -1,18 +1,20 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app.dart';
 import 'core/notifications/notification_service.dart';
 
-// ⚠️ Supabase Cloud Credentials
-const String supabaseUrl = 'https://gevejzhwctbszwuggavl.supabase.co';
-const String supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdldmVqemh3Y3Ric3p3dWdnYXZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIwMzgyMzcsImV4cCI6MjEwNzYxNDIzN30.X8Q43OlOK3MEdEPCqGhg57oRCQKNIvJ_wd9UKu4_-NI';
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Global error handler
+  // Load .env file
+  await dotenv.load(fileName: ".env");
+
+  final supabaseUrl = dotenv.env['SUPABASE_URL']!;
+  final supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY']!;
+
   FlutterError.onError = (details) {
     FlutterError.presentError(details);
     debugPrint('Flutter Error: ${details.exception}');
@@ -43,7 +45,7 @@ Future<void> main() async {
     debugPrint('❌ Supabase init error: $e');
   }
 
-  // 3. Init Notification Service (kalau user udah login)
+  // 3. Init Notification Service
   try {
     final userId = Supabase.instance.client.auth.currentUser?.id;
     if (userId != null) {

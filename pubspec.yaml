@@ -36,6 +36,9 @@ dependencies:
   intl: ^0.20.2
   shared_preferences: ^2.3.3
 
+  # ENV
+  flutter_dotenv: ^5.2.1          # ← TAMBAH
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -49,6 +52,7 @@ flutter:
     - assets/images/
     - assets/icons/
     - assets/logo/
+    - .env                         # ← TAMBAH
 
 # ===================
 # Flutter Launcher Icons

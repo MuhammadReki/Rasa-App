@@ -94,3 +94,6 @@ GoogleService-Info.plist
 # Proguard mapping
 # ===================
 build/app/outputs/mapping/
+
+# Local Netlify folder
+.netlify

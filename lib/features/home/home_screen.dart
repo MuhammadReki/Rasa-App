@@ -110,7 +110,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'Cek koneksi ke Supabase lokal.',
+                              'Cek koneksi internet kamu, lalu coba lagi.',
                               textAlign: TextAlign.center,
                               style: GoogleFonts.inter(
                                 fontSize: 11,
