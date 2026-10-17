@@ -11,7 +11,52 @@
 [![Flutter](https://img.shields.io/badge/Flutter-3.24+-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.5+-0175C2?logo=dart&logoColor=white)](https://dart.dev)
 [![Supabase](https://img.shields.io/badge/Supabase-2.8+-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com)
+[![Firebase](https://img.shields.io/badge/Firebase-FCM-FFCA28?logo=firebase&logoColor=white)](https://firebase.google.com)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+</div>
+
+---
+
+## 📱 Download APK
+
+<div align="center">
+
+<img src="screenshots/qr-code.png" alt="QR Code Download" width="200" />
+
+**Scan QR Code untuk download APK**
+
+[![Download APK](https://img.shields.io/badge/Download-APK-brightgreen?style=for-the-badge&logo=android)](https://github.com/MuhammadReki/Rasa-App/releases/latest)
+
+</div>
+
+---
+
+## 📸 Screenshot
+
+<div align="center">
+
+### Baris 1
+<table>
+  <tr>
+    <td><img src="screenshots/1.png" width="200" /></td>
+    <td><img src="screenshots/2.png" width="200" /></td>
+    <td><img src="screenshots/3.png" width="200" /></td>
+    <td><img src="screenshots/4.png" width="200" /></td>
+    <td><img src="screenshots/5.png" width="200" /></td>
+  </tr>
+</table>
+
+### Baris 2
+<table>
+  <tr>
+    <td><img src="screenshots/6.png" width="200" /></td>
+    <td><img src="screenshots/7.png" width="200" /></td>
+    <td><img src="screenshots/8.png" width="200" /></td>
+    <td><img src="screenshots/9.png" width="200" /></td>
+    <td><img src="screenshots/10.png" width="200" /></td>
+  </tr>
+</table>
 
 </div>
 
@@ -44,12 +89,14 @@
 - Edit & delete artikel sendiri
 - Search artikel real-time
 - Reading time otomatis
+- Reading progress bar
 
 ### 💬 Engagement
 - ❤️ Like artikel
 - 🔖 Bookmark artikel
-- 💬 Komentar
+- 💬 Komentar + reply nested
 - 📤 Share artikel
+- 🎨 Share card generator (3 template)
 - 👁️ Views counter
 
 ### 👤 Profil
@@ -57,10 +104,25 @@
 - Upload avatar dari galeri
 - Tab: **Artikel saya** / **Disukai** / **Disimpan**
 - Stats: artikel, pengikut, mengikuti
+- Follow user
+
+### 🔔 Notifikasi
+- FCM Push Notification — notif real-time
+- In-app notifikasi
+- Mark as read
+
+### 🛡️ Admin Panel
+- Approve/reject artikel
+- Edit/hapus artikel
+- Stats: pending, published, users
+
+### 🌐 Multi-Bahasa
+- Indonesia 🇮🇩
+- English 🇬🇧
 
 ### 🎨 UI/UX
 - Design system warm & cozy (cream, terracotta)
-- **Dark mode** full support
+- Dark mode full support
 - Animasi smooth
 - Floating bottom nav
 - Typography editorial (Playfair Display + Inter)
@@ -99,11 +161,14 @@
 | **State Management** | Riverpod 2.6 |
 | **Routing** | go_router 14.6 |
 | **Backend** | Supabase (PostgreSQL + Auth + Storage) |
+| **Push Notif** | Firebase Cloud Messaging |
 | **Local Storage** | shared_preferences |
 | **Image Cache** | cached_network_image |
 | **Image Picker** | image_picker |
 | **Share** | share_plus |
 | **Fonts** | google_fonts |
+| **Env** | flutter_dotenv |
+| **Localization** | flutter_localizations |
 
 ---
 
@@ -112,12 +177,13 @@
 ### Prerequisites
 
 - [Flutter 3.24+](https://docs.flutter.dev/get-started/install)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- [Supabase CLI](https://supabase.com/docs/guides/cli)
+- [Android Studio](https://developer.android.com/studio)
+- [Supabase Account](https://supabase.com)
+- [Firebase Account](https://firebase.google.com)
 
 ### Instalasi
 
 1. **Clone repo:**
    ```bash
-   git clone https://github.com/MuhammadReki/rasa-app.git
-   cd rasa-app
+   git clone https://github.com/MuhammadReki/Rasa-App.git
+   cd Rasa-App

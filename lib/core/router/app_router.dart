@@ -13,6 +13,10 @@ import '../../features/bookmark/bookmarks_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/profile/user_profile_screen.dart';
 import '../../features/settings/settings_screen.dart';
+import '../../features/settings/screens/about_screen.dart';
+import '../../features/settings/screens/privacy_policy_screen.dart';
+import '../../features/settings/screens/terms_screen.dart';
+import '../../features/settings/screens/language_screen.dart';
 import '../../features/profile/edit_profile_screen.dart';
 import '../../features/submit/submit_story_screen.dart';
 import '../../features/comments/comments_screen.dart';
@@ -63,6 +67,22 @@ class AppRouter {
       ),
       GoRoute(
           path: '/settings', builder: (c, s) => const SettingsScreen()),
+      GoRoute(
+        path: '/about',
+        builder: (c, s) => const AboutScreen(),
+      ),
+      GoRoute(
+        path: '/privacy-policy',
+        builder: (c, s) => const PrivacyPolicyScreen(),
+      ),
+      GoRoute(
+        path: '/terms',
+        builder: (c, s) => const TermsScreen(),
+      ),
+      GoRoute(
+        path: '/language',
+        builder: (c, s) => const LanguageScreen(),
+      ),
       GoRoute(
         path: '/edit-profile',
         builder: (c, s) => const EditProfileScreen(),

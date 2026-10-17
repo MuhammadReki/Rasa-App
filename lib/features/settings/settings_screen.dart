@@ -64,7 +64,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Header
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
               child: Row(
@@ -137,6 +136,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       textSecondary: textSecondary,
                       dividerColor: dividerColor,
                       isDark: isDark,
+                      onTap: () => context.push('/language'),
                     ),
                     const SizedBox(height: 20),
                     _buildGroupLabel('TENTANG & PRIVASI', textSecondary),
@@ -147,6 +147,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       textSecondary: textSecondary,
                       dividerColor: dividerColor,
                       isDark: isDark,
+                      onTap: () => context.push('/about'),
                     ),
                     _buildClickRow(
                       icon: Icons.shield_outlined,
@@ -155,6 +156,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       textSecondary: textSecondary,
                       dividerColor: dividerColor,
                       isDark: isDark,
+                      onTap: () => context.push('/privacy-policy'),
                     ),
                     _buildClickRow(
                       icon: Icons.description_outlined,
@@ -163,12 +165,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       textSecondary: textSecondary,
                       dividerColor: dividerColor,
                       isDark: isDark,
+                      onTap: () => context.push('/terms'),
                     ),
                     const SizedBox(height: 20),
 
-                    // ===================
-                    // ADMIN PANEL (cuma muncul kalau admin)
-                    // ===================
                     Consumer(
                       builder: (context, ref, _) {
                         final isAdminAsync = ref.watch(isAdminProvider);
@@ -202,9 +202,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       },
                     ),
 
-                    // ===================
-                    // LOGOUT
-                    // ===================
                     GestureDetector(
                       onTap: _handleLogout,
                       child: Container(
